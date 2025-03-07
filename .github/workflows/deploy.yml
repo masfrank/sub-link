@@ -28,7 +28,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          KV_NAMESPACE="SUBLINK_KV"
+          KV_NAMESPACE="SUBLINK"
           echo "Checking for KV namespace: $KV_NAMESPACE"
           if ! LIST_OUTPUT=$(wrangler kv namespace list 2>&1); then
             echo "Error getting KV namespace list: $LIST_OUTPUT"
@@ -43,7 +43,7 @@ jobs:
             exit 1
           fi
           
-          KV_ID=$(echo "$LIST_OUTPUT" | jq -r '.[] | select(.title == "sublink-worker-'$KV_NAMESPACE'") | .id')
+          KV_ID=$(echo "$LIST_OUTPUT" | jq -r '.[] | select(.title == "sublinker-'$KV_NAMESPACE'") | .id')
           
           if [ -z "$KV_ID" ]; then
               echo "KV namespace $KV_NAMESPACE does not exist. Creating..."

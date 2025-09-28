@@ -1,9 +1,11 @@
 import { t } from './i18n';
 
-export const SITE_RULE_SET_BASE_URL = 'https://gh.sageer.me/https://raw.githubusercontent.com/lyc8503/sing-box-rules/refs/heads/rule-set-geosite/';
-export const IP_RULE_SET_BASE_URL = 'https://gh.sageer.me/https://raw.githubusercontent.com/lyc8503/sing-box-rules/refs/heads/rule-set-geoip/';
-export const CLASH_SITE_RULE_SET_BASE_URL = 'https://gh.sageer.me/https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/';
-export const CLASH_IP_RULE_SET_BASE_URL = 'https://gh.sageer.me/https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geoip/';
+export const SITE_RULE_SET_BASE_URL = 'https://gh-proxy.com/https://raw.githubusercontent.com/lyc8503/sing-box-rules/refs/heads/rule-set-geosite/';
+export const IP_RULE_SET_BASE_URL = 'https://gh-proxy.com/https://raw.githubusercontent.com/lyc8503/sing-box-rules/refs/heads/rule-set-geoip/';
+export const CLASH_SITE_RULE_SET_BASE_URL = 'https://gh-proxy.com/https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/';
+export const CLASH_IP_RULE_SET_BASE_URL = 'https://gh-proxy.com/https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geoip/';
+export const SURGE_SITE_RULE_SET_BASEURL = 'https://gh-proxy.com/https://github.com/NSZA156/surge-geox-rules/raw/refs/heads/release/geo/geosite/'
+export const SURGE_IP_RULE_SET_BASEURL = 'https://gh-proxy.com/https://github.com/NSZA156/surge-geox-rules/raw/refs/heads/release/geo/geoip/'
 // Custom rules
 export const CUSTOM_RULES = [];
 // Unified rule structure
@@ -17,7 +19,7 @@ export const UNIFIED_RULES = [
 	{
 		name: 'AI Services',
 		outbound: t('outboundNames.AI Services'),
-		site_rules: ['category-ai-chat-!cn',],
+		site_rules: ['category-ai-!cn',],
 		ip_rules: []
 	},
 	{
@@ -47,7 +49,7 @@ export const UNIFIED_RULES = [
 	{
 		name: 'Location:CN',
 		outbound: t('outboundNames.Location:CN'),
-		site_rules: ['geolocation-cn'],
+		site_rules: ['geolocation-cn','cn'],
 		ip_rules: ['cn']
 	},
 	{
@@ -120,7 +122,7 @@ export const UNIFIED_RULES = [
 
 export const PREDEFINED_RULE_SETS = {
 	minimal: ['Location:CN', 'Private', 'Non-China'],
-	balanced: ['Location:CN', 'Private', 'Non-China', 'Google', 'Youtube', 'AI Services', 'Telegram'],
+	balanced: ['Location:CN', 'Private', 'Non-China','Github', 'Google', 'Youtube', 'AI Services', 'Telegram'],
 	comprehensive: UNIFIED_RULES.map(rule => rule.name)
   };
   
@@ -384,42 +386,31 @@ export const SING_BOX_CONFIG = {
 	dns: {
 		servers: [
 			{
+				type: "tcp",
 				tag: "dns_proxy",
-				address: "tcp://1.1.1.1",
-				address_resolver: "dns_resolver",
-				strategy: "ipv4_only",
-				detour: "🚀 节点选择"
+				server: "1.1.1.1",
+				detour: "🚀 节点选择",
+				domain_resolver: "dns_resolver"
 			},
 			{
-				tag: "dns_direct", 
-				address: "https://dns.alidns.com/dns-query",
-				address_resolver: "dns_resolver",
-				strategy: "ipv4_only",
-				detour: "DIRECT"
+				type: "https",
+				tag: "dns_direct",
+				server: "dns.alidns.com",
+				domain_resolver: "dns_resolver"
 			},
 			{
+				type: "udp",
 				tag: "dns_resolver",
-				address: "223.5.5.5",
-				detour: "DIRECT"
+				server: "223.5.5.5"
 			},
 			{
-				tag: "dns_success",
-				address: "rcode://success"
-			},
-			{
-				tag: "dns_refused",
-				address: "rcode://refused"
-			},
-			{
+				type: "fakeip",
 				tag: "dns_fakeip",
-				address: "fakeip"
+				inet4_range: "198.18.0.0/15",
+				inet6_range: "fc00::/18"
 			}
 		],
 		rules: [
-			{
-				outbound: "any",
-				server: "dns_resolver"
-			},
 			{
 				rule_set: "geolocation-!cn",
 				query_type: [
@@ -430,9 +421,7 @@ export const SING_BOX_CONFIG = {
 			},
 			{
 				rule_set: "geolocation-!cn",
-				query_type: [
-					"CNAME"
-				],
+				query_type: "CNAME",
 				server: "dns_proxy"
 			},
 			{
@@ -442,35 +431,29 @@ export const SING_BOX_CONFIG = {
 					"CNAME"
 				],
 				invert: true,
-				server: "dns_refused",
-				disable_cache: true
+				action: "predefined",
+				rcode: "REFUSED"
 			}
 		],
 		final: "dns_direct",
-		independent_cache: true,
-		fakeip: {
-			enabled: true,
-			inet4_range: "198.18.0.0/15",
-			inet6_range: "fc00::/18"
-		}
+		independent_cache: true
 	},
 	ntp: {
 		enabled: true,
 		server: 'time.apple.com',
 		server_port: 123,
-		interval: '30m',
-		detour: 'DIRECT'
+		interval: '30m'
 	},
 	inbounds: [
 		{ type: 'mixed', tag: 'mixed-in', listen: '0.0.0.0', listen_port: 2080 },
 		{ type: 'tun', tag: 'tun-in', address: '172.19.0.1/30', auto_route: true, strict_route: true, stack: 'mixed', sniff: true }
 	],
 	outbounds: [
-		{ type: 'direct', tag: 'DIRECT' },
 		{ type: 'block', tag: 'REJECT' },
-		{ type: 'dns', tag: 'dns-out' }
+		{ type: "direct", tag: 'DIRECT' }
 	],
 	route : {
+		default_domain_resolver: "dns_resolver",
 		"rule_set": [
             {
                 "tag": "geosite-geolocation-!cn",
@@ -479,12 +462,7 @@ export const SING_BOX_CONFIG = {
                 "path": "geosite-geolocation-!cn.srs"
             }
 		],
-		rules: [
-			{
-				"outbound": "any",
-				"server": "dns_resolver"
-			}
-		]
+		rules: []
 	},
 	experimental: {
 		cache_file: {
@@ -539,4 +517,36 @@ export const CLASH_CONFIG = {
     },
     'proxies': [],
     'proxy-groups': []
+};
+
+export const SURGE_CONFIG = {
+	'general': {
+        'allow-wifi-access': false,
+        'wifi-access-http-port': 6152,
+        'wifi-access-socks5-port': 6153,
+        'http-listen': '127.0.0.1:6152',
+        'socks5-listen': '127.0.0.1:6153',
+        'allow-hotspot-access': false,
+        'skip-proxy': '127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,100.64.0.0/10,17.0.0.0/8,localhost,*.local,*.crashlytics.com,seed-sequoia.siri.apple.com,sequoia.apple.com',
+        'test-timeout': 5,
+        'proxy-test-url': 'http://cp.cloudflare.com/generate_204',
+        'internet-test-url': 'http://www.apple.com/library/test/success.html',
+        'geoip-maxmind-url': 'https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb',
+        'ipv6': false,
+        'show-error-page-for-reject': true,
+        'dns-server': '119.29.29.29, 180.184.1.1, 223.5.5.5, system',
+        'encrypted-dns-server': 'https://223.5.5.5/dns-query',
+        'exclude-simple-hostnames': true,
+        'read-etc-hosts': true,
+        'always-real-ip': '*.msftconnecttest.com, *.msftncsi.com, *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com, *.logon.battlenet.com.cn, *.logon.battle.net, stun.l.google.com, easy-login.10099.com.cn,*-update.xoyocdn.com, *.prod.cloud.netflix.com, appboot.netflix.com, *-appboot.netflix.com',
+        'hijack-dns': '*:53',
+        'udp-policy-not-supported-behaviour': 'REJECT',
+        'hide-vpn-icon': false,
+    },
+    'replica': {
+        'hide-apple-request': true,
+        'hide-crashlytics-request': true,
+        'use-keyword-filter': false,
+        'hide-udp': false
+    }
 };
